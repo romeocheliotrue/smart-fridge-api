@@ -44,7 +44,7 @@ tags:
   - name: Temperature
     description: Управление температурой
   - name: Products
-    description: Продукты: овощи, молоко, пицца и т.д.
+    description: Овощи, молоко, пицца и т.д.
   - name: Easy Access
     description: Быстрый доступ к продуктам
   - name: Notifications
@@ -457,3 +457,4 @@ paths:
             text/plain:
               schema:
                 $ref: '#/components/schemas/MetricsResponse'
+
