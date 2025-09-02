@@ -673,8 +673,8 @@ paths:
             schema:
               $ref: "#/components/schemas/Container"
             example:
-              type: general
-              access_level: normal
+              type: vegetables
+              access_level: easy
       responses:
         "200":
           $ref: "#/components/responses/Success200"
@@ -1024,5 +1024,6 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
 
