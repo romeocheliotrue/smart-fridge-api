@@ -544,7 +544,7 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Internal Server Error
-            message: Не удалось сохранить новое расположение контейнера
+            message: Не удалось сохранить новое состояние объекта
             status: 500
             path: /containers/container-veg/move
   requestBodies:
@@ -1024,3 +1024,4 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
