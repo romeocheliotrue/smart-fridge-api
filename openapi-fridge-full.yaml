@@ -453,17 +453,17 @@ components:
               - $ref: "#/components/schemas/Product"
               - $ref: "#/components/schemas/Notification"
     NoContent204:
-      description: Операция выполнена, содержимое отсутствует (например, удаление)
+      description: Операция выполнена, содержимое отсутствует
       content: {}
     BadRequest400:
-      description: Неверный запрос (некорректные данные)
+      description: Неверный запрос
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Bad Request
-            message: Поле 'action' должно быть 'open' или 'close'
+            message: Некорректный запрос
             status: 400
             path: /doors
     Unauthorized401:
@@ -485,7 +485,7 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Forbidden
-            message: У вас нет прав на изменение температуры морозилки
+            message: У вас нет прав для выполнения запроса
             status: 403
             path: /temperature
     NotFound404:
@@ -496,7 +496,7 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Not Found
-            message: Контейнер container-999 не найден
+            message: По вашему запросу ничего не найдено
             status: 404
             path: /containers/container-999
     MethodNotAllowed405:
@@ -507,29 +507,29 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Method Not Allowed
-            message: Метод 'PUT' не поддерживается для этого эндпоинта
+            message: Метод не поддерживается для этого эндпоинта
             status: 405
             path: /products
     Conflict409:
-      description: Конфликт состояния (например, дверь открыта, нельзя менять температуру)
+      description: Конфликт состояния
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Conflict
-            message: Нельзя изменить расположение при закрытой двери
+            message: Нельзя изменить состояние объекта из-за его зависимости от состояния связанного объекта
             status: 409
             path: /containers/container-veg/move
     UnprocessableEntity422:
-      description: Данные не прошли валидацию (семантическая ошибка)
+      description: Данные не прошли валидацию
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Unprocessable Entity
-            message: Новое расположение 'ceiling' не поддерживается
+            message: Новое значение для этого объекта не поддерживается
             status: 422
             path: /containers/container-veg/move
             details:
@@ -544,7 +544,7 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
           example:
             error: Internal Server Error
-            message: Не удалось сохранить новое состояние объекта
+            message: Не удалось обработать запрос корректно
             status: 500
             path: /containers/container-veg/move
   requestBodies:
@@ -1024,4 +1024,5 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
