@@ -1,0 +1,478 @@
+openapi: 3.0.3
+info:
+  title: Smart Fridge API (Full)
+  description: |
+    Расширенное RESTful + WebSocket API для умного холодильника с морозильной камерой, управлением температурой, событиями в реальном времени и метриками Prometheus.
+
+    ## 🔧 Возможности:
+    - Управление дверью, светом, контейнерами
+    - Морозильная камера с отдельной температурой
+    - Добавление продуктов (включая пиццу!)
+    - Изменение температуры для зон и всего холодильника
+    - WebSocket-события: `door_opened`, `temperature_changed`
+    - Эндпоинт `/metrics` для мониторинга в Prometheus
+
+    ## 📊 Метрики:
+    - `fridge_door_open_total` — сколько раз открывали
+    - `fridge_temperature_celsius` — температура по зонам
+    - `product_expiry_days` — сколько дней осталось до просрочки
+    - `freezer_power_state` — включена ли морозилка
+
+  version: 1.1.0
+  contact:
+    name: Smart Fridge Team
+    email: api@smartfridge.com
+    url: https://smartfridge.com
+
+license:
+  name: MIT
+  url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.fridge.com/v1
+    description: Продакшен
+  - url: http://localhost:8080/v1
+    description: Локальный сервер
+
+tags:
+  - name: Doors
+    description: Управление дверью
+  - name: Light
+    description: Управление подсветкой
+  - name: Containers
+    description: Контейнеры и зоны (включая морозилку)
+  - name: Temperature
+    description: Управление температурой
+  - name: Products
+    description: Продукты: овощи, молоко, пицца и т.д.
+  - name: Easy Access
+    description: Быстрый доступ к продуктам
+  - name: Notifications
+    description: Системные уведомления
+  - name: Events
+    description: WebSocket-события в реальном времени
+  - name: Metrics
+    description: Метрики для Prometheus
+
+components:
+  # --- СХЕМЫ ---
+  schemas:
+    Door:
+      type: object
+      properties:
+        id:
+          type: string
+          example: door-main
+        status:
+          type: string
+          enum: [open, closed]
+          example: closed
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-04-05T10:00:00Z"
+        light_triggered:
+          type: boolean
+          example: true
+        _links:
+          $ref: '#/components/schemas/HALLinks'
+
+    Light:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [on, off]
+          example: off
+        triggered_by:
+          type: string
+          enum: [door_open, manual]
+          example: door_open
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-04-05T10:00:00Z"
+        _links:
+          $ref: '#/components/schemas/HALLinks'
+
+    Container:
+      type: object
+      properties:
+        id:
+          type: string
+          example: container-freezer
+        type:
+          type: string
+          enum: [vegetables, dairy, general, freezer]
+          example: freezer
+        location:
+          type: string
+          example: bottom
+        access_level:
+          type: string
+          enum: [easy, normal]
+          example: normal
+        temperature_celsius:
+          type: number
+          format: float
+          example: -18.0
+          description: Температура в градусах Цельсия
+        capacity_liters:
+          type: integer
+          example: 50
+        is_active:
+          type: boolean
+          example: true
+        products_count:
+          type: integer
+          example: 3
+        _links:
+          $ref: '#/components/schemas/HALLinks'
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          example: product-pizza-01
+        name:
+          type: string
+          example: Пицца "Маргарита"
+        category:
+          type: string
+          enum: [vegetables, dairy, meat, frozen, general]
+          example: frozen
+        quantity:
+          type: integer
+          example: 1
+        expiry_date:
+          type: string
+          format: date
+          example: "2025-10-01"
+        container_id:
+          type: string
+          example: container-freezer
+        storage_type:
+          type: string
+          enum: [fresh, frozen]
+          example: frozen
+        _links:
+          $ref: '#/components/schemas/HALLinks'
+
+    TemperatureSetting:
+      type: object
+      properties:
+        target:
+          type: string
+          enum: [main, freezer, container]
+          example: freezer
+        container_id:
+          type: string
+          example: container-freezer
+          nullable: true
+        value_celsius:
+          type: number
+          format: float
+          example: -18.5
+      required:
+        - target
+        - value_celsius
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          example: notif-temp-001
+        type:
+          type: string
+          enum: [expiry_warning, temperature_alert, door_left_open]
+          example: temperature_alert
+        message:
+          type: string
+          example: "Температура в морозилке превысила -15°C!"
+        severity:
+          type: string
+          enum: [low, medium, high]
+          example: high
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-04-05T10:15:00Z"
+        _links:
+          $ref: '#/components/schemas/HALLinks'
+
+    HALLinks:
+      type: object
+      properties:
+        self:
+          type: object
+          properties:
+            href: { type: string, example: "/containers/container-freezer" }
+        collection:
+          type: object
+          properties:
+            href: { type: string, example: "/containers" }
+        products:
+          type: object
+          properties:
+            href: { type: string, example: "/products?container_id=container-freezer" }
+        temperature:
+          type: object
+          properties:
+            href: { type: string, example: "/temperature?target=freezer&container_id=container-freezer" }
+
+    MetricsResponse:
+      type: string
+      example: |
+        # HELP fridge_door_open_total Общее количество открытий двери
+        # TYPE fridge_door_open_total counter
+        fridge_door_open_total 42
+
+        # HELP fridge_temperature_celsius Температура по зонам
+        # TYPE fridge_temperature_celsius gauge
+        fridge_temperature_celsius{zone="main"} 4.2
+        fridge_temperature_celsius{zone="freezer"} -18.0
+
+        # HELP product_expiry_days Оставшиеся дни до просрочки
+        # TYPE product_expiry_days gauge
+        product_expiry_days{product="Пицца \"Маргарита\""} 168
+
+        # HELP freezer_power_state Состояние морозилки (1=включена)
+        # TYPE freezer_power_state gauge
+        freezer_power_state 1
+
+  # --- БЕЗОПАСНОСТЬ ---
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  security:
+    - BearerAuth: []
+    - ApiKeyAuth: []
+
+  # --- ПРИМЕРЫ ---
+  examples:
+    PizzaInFreezer:
+      summary: Пицца в морозилке
+      value:
+        id: product-pizza-01
+        name: Пицца "Маргарита"
+        category: frozen
+        quantity: 1
+        expiry_date: "2025-10-01"
+        container_id: container-freezer
+        storage_type: frozen
+        _links:
+          self: { href: "/products/product-pizza-01" }
+          container: { href: "/containers/container-freezer" }
+
+    FreezerContainer:
+      summary: Морозильная камера
+      value:
+        id: container-freezer
+        type: freezer
+        location: bottom
+        access_level: normal
+        temperature_celsius: -18.0
+        capacity_liters: 50
+        is_active: true
+        products_count: 1
+        _links:
+          self: { href: "/containers/container-freezer" }
+          products: { href: "/products?container_id=container-freezer" }
+          temperature: { href: "/temperature?target=container&container_id=container-freezer" }
+
+    TemperatureChangeEvent:
+      summary: Событие изменения температуры
+      value:
+        event: temperature_changed
+        data:
+          container_id: container-freezer
+          previous: -18.0
+          current: -17.5
+          timestamp: "2025-04-05T10:20:00Z"
+
+  # --- ОТВЕТЫ ---
+  responses:
+    Success200:
+      description: Операция выполнена
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Door'
+              - $ref: '#/components/schemas/Container'
+              - $ref: '#/components/schemas/Product'
+    Created201:
+      description: Ресурс создан
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Product'
+              - $ref: '#/components/schemas/Notification'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Not Found
+            message: "Контейнер container-999 не найден"
+            status: 404
+            path: "/containers/container-999"
+
+  # --- ЗАПРОСЫ ---
+  requestBodies:
+    SetTemperature:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TemperatureSetting'
+          example:
+            target: freezer
+            value_celsius: -18.5
+
+# === ПУТИ ===
+paths:
+  /doors:
+    put:
+      tags: [Doors]
+      summary: Открыть/закрыть дверь
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string, enum: [open, close] }
+              required: [action]
+            example:
+              action: open
+      responses:
+        '200':
+          $ref: '#/components/responses/Success200'
+
+  /containers:
+    get:
+      tags: [Containers]
+      summary: Все контейнеры (включая морозилку)
+      responses:
+        '200':
+          description: Список контейнеров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Container'
+              examples:
+                WithFreezer:
+                  $ref: '#/components/examples/FreezerContainer'
+
+  /containers/{id}:
+    get:
+      tags: [Containers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          $ref: '#/components/responses/Success200'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /products:
+    post:
+      tags: [Products]
+      summary: Добавить продукт (например, пиццу)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+            examples:
+              Pizza:
+                $ref: '#/components/examples/PizzaInFreezer'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created201'
+
+  /temperature:
+    put:
+      tags: [Temperature]
+      summary: Установить температуру
+      requestBody:
+        $ref: '#/components/requestBodies/SetTemperature'
+      responses:
+        '200':
+          description: Температура установлена
+          content:
+            application/json:
+              example:
+                status: success
+                message: "Температура для freezer установлена на -18.5°C"
+                timestamp: "2025-04-05T10:20:00Z"
+
+  /events:
+    get:
+      tags: [Events]
+      summary: Подключиться к WebSocket для событий
+      description: |
+        Подключение по `wss://api.fridge.com/v1/events`
+
+        Поддерживаемые события:
+        - `door_opened`
+        - `door_closed`
+        - `temperature_changed`
+        - `product_added`
+        - `expiry_warning`
+
+        Пример события:
+        ```json
+        {
+          "event": "temperature_changed",
+          "data": {
+            "container_id": "container-freezer",
+            "previous": -18.0,
+            "current": -17.5,
+            "timestamp": "2025-04-05T10:20:00Z"
+          }
+        }
+        ```
+      responses:
+        '101':
+          description: Переключение на WebSocket
+        '401':
+          description: Неавторизовано
+
+  /metrics:
+    get:
+      tags: [Metrics]
+      summary: Метрики для Prometheus
+      description: |
+        Возвращает метрики в формате Prometheus (text/plain).
+
+        Пример:
+        ```
+        fridge_door_open_total 42
+        fridge_temperature_celsius{zone="freezer"} -18.0
+        product_expiry_days{product="Пицца \"Маргарита\""} 168
+        ```
+      responses:
+        '200':
+          description: Метрики Prometheus
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
