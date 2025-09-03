@@ -369,7 +369,7 @@ components:
         - new_location
       example:
         new_location: middle-right
-    ProductsFromThePackageRequest:
+    ProductsFromThePackage:
       type: array
       items:
         $ref: "#/components/schemas/Product"
@@ -770,7 +770,7 @@ paths:
             schema:
               oneOf:
                 - $ref: "#/components/schemas/Product"
-                - $ref: "#/components/schemas/ProductsFromThePackageRequest"
+                - $ref: "#/components/schemas/ProductsFromThePackage"
       responses:
         "201":
           $ref: "#/components/responses/Created201"
@@ -1024,6 +1024,7 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
 
 
