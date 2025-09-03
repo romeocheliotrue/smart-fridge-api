@@ -369,7 +369,7 @@ components:
         - new_location
       example:
         new_location: middle-right
-    BulkProductsRequest:
+    ProductsFromThePackageRequest:
       type: array
       items:
         $ref: "#/components/schemas/Product"
@@ -1024,6 +1024,7 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
 
 
