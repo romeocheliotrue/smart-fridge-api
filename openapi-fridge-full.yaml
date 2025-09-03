@@ -573,7 +573,7 @@ paths:
                   enum:
                     - open
                     - close
-                  example: open
+                  example: close
               required:
                 - action
       responses:
@@ -611,7 +611,7 @@ paths:
                   enum:
                     - on
                     - off
-                  example: on
+                  example: off
               required:
                 - status
       responses:
@@ -1024,6 +1024,7 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
 
 
