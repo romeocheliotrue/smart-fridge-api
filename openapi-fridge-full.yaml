@@ -770,7 +770,7 @@ paths:
             schema:
               oneOf:
                 - $ref: "#/components/schemas/Product"
-                - $ref: "#/components/schemas/BulkProductsRequest"
+                - $ref: "#/components/schemas/ProductsFromThePackageRequest"
       responses:
         "201":
           $ref: "#/components/responses/Created201"
@@ -1024,6 +1024,7 @@ paths:
                 $ref: "#/components/schemas/MetricsResponse"
         "500":
           $ref: "#/components/responses/InternalServerError500"
+
 
 
 
